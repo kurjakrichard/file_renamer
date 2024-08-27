@@ -1,6 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:excel/excel.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:path/path.dart' as p;
 
@@ -29,8 +29,15 @@ class _HomePageState extends State<HomePage> {
           style: TextStyle(color: Colors.white),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: dir == null || fileName == null ? FloatingActionButton(
+        backgroundColor: Colors.grey,
+        child: const Icon(
+          Icons.shuffle,
+          color: Colors.white,
+        ),
+        onPressed: (){}) : FloatingActionButton(
         backgroundColor: Colors.blue,
+        tooltip: 'Rename Files',
         child: const Icon(
           Icons.shuffle,
           color: Colors.white,
@@ -43,9 +50,12 @@ class _HomePageState extends State<HomePage> {
               String path = p.dirname(file.path);
               String searchString = oldName.split('_')[0];
               print(searchString);
-              String addString = excelList![searchString]!;
-              String newName = '${addString}_$oldName';
+              String addString = excelList![searchString] ?? '';
+              if(addString != '') {
+                              String newName = '${addString}_$oldName';
               file.rename('$path/$newName');
+              }
+
             }
             setState(() {
               List<FileSystemEntity> entities = dir!.listSync();
