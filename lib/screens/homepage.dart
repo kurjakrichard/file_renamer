@@ -16,6 +16,7 @@ class _HomePageState extends State<HomePage> {
   FilePickerResult? pickedFile;
   String? fileName;
   String? dirName;
+  String separator = Platform.isWindows ? '\\' : '/';
   List<File> files = [];
   Map<String, String>? excelList = {};
 
@@ -48,9 +49,7 @@ class _HomePageState extends State<HomePage> {
               String oldName = p.basename(file.path);
               print(oldName);
               String path = p.dirname(file.path);
-              String searchString = oldName.split('_')[0];
-              print(searchString);
-              String addString = excelList![searchString] ?? '';
+              String addString = excelList![oldName.split('_')[0]] ?? excelList![oldName.split(' ')[0]] ?? '';
               if(addString != '') {
                               String newName = '${addString}_$oldName';
               file.rename('$path/$newName');
@@ -181,7 +180,7 @@ class _HomePageState extends State<HomePage> {
                     itemBuilder: (BuildContext context, int index) {
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Text(files[index].path.split('/').last),
+                        child: Text(files[index].path.split(separator).last),
                       );
                     },
                   ),
