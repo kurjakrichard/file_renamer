@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:excel/excel.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
+// ignore: depend_on_referenced_packages
 import 'package:path/path.dart' as p;
 
 class HomePage extends StatefulWidget {
@@ -18,7 +19,8 @@ class _HomePageState extends State<HomePage> {
   String? dirName;
   String separator = Platform.isWindows ? '\\' : '/';
   List<File> files = [];
-  Map<String, String>? excelList = {};
+  Map<String, String> excelList = {};
+  Map<String, String> fileList = {};
 
   @override
   Widget build(BuildContext context) {
@@ -30,40 +32,44 @@ class _HomePageState extends State<HomePage> {
           style: TextStyle(color: Colors.white),
         ),
       ),
-      floatingActionButton: dir == null || fileName == null ? FloatingActionButton(
-        backgroundColor: Colors.grey,
-        child: const Icon(
-          Icons.shuffle,
-          color: Colors.white,
-        ),
-        onPressed: (){}) : FloatingActionButton(
-        backgroundColor: Colors.blue,
-        tooltip: 'Rename Files',
-        child: const Icon(
-          Icons.shuffle,
-          color: Colors.white,
-        ),
-        onPressed: () {
-          if (dir != null) {
-            for (var file in files) {
-              String oldName = p.basename(file.path);
-              print(oldName);
-              String path = p.dirname(file.path);
-              String addString = excelList![oldName.split('_')[0]] ?? excelList![oldName.split(' ')[0]] ?? '';
-              if(addString != '') {
-                              String newName = '${addString}_$oldName';
-              file.rename('$path/$newName');
-              }
-
-            }
-            setState(() {
-              List<FileSystemEntity> entities = dir!.listSync();
-              files = entities.whereType<File>().toList();
-            });
-          }
-        },
-      ),
-      body: Column(
+      floatingActionButton: dir == null || fileName == null
+          ? FloatingActionButton(
+              backgroundColor: Colors.grey,
+              child: const Icon(
+                Icons.shuffle,
+                color: Colors.white,
+              ),
+              onPressed: () {})
+          : FloatingActionButton(
+              backgroundColor: Colors.blue,
+              tooltip: 'Rename Files',
+              child: const Icon(
+                Icons.shuffle,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                if (dir != null) {
+                  for (var file in files) {
+                    String oldName = p.basename(file.path);
+                    String path = p.dirname(file.path);
+                    String addString = excelList[oldName.split('_')[0]] ??
+                        excelList[oldName.split(' ')[0]] ??
+                        '';
+                    if (addString != '') {
+                      String newName = '${addString}_$oldName';
+                      file.rename('$path/$newName');
+                    }
+                  }
+                  setState(() {
+                    List<FileSystemEntity> entities = dir!.listSync();
+                    files = entities.whereType<File>().toList();
+                    dir = null;
+                  });
+                }
+                _dialogBuilder(context);
+              },
+            ),
+      body: ListView(
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16),
@@ -80,6 +86,7 @@ class _HomePageState extends State<HomePage> {
                       dirName = selectedDirectory;
                       List<FileSystemEntity> entities = dir!.listSync();
                       files = entities.whereType<File>().toList();
+                      createFilelist();
                     });
                   },
                   child: const Icon(Icons.add),
@@ -114,54 +121,13 @@ class _HomePageState extends State<HomePage> {
                             .readAsBytesSync();
                         var excel = Excel.decodeBytes(bytes);
                         for (var table in excel.tables.keys) {
-                          //print(table); //sheet Name
-                          //print(excel.tables[table]!.maxColumns);
-                          //print(excel.tables[table]!.maxRows);
                           for (var row in excel.tables[table]!.rows) {
-                            excelList?['${row[1]!.value}'] = '${row[0]!.value}';
-
-                            /*      for (var cell in row) {
-                              print(
-                                  'cell ${cell!.rowIndex}/${cell.columnIndex}');
-                              final value = cell.value;
-                              final numFormat = cell.cellStyle?.numberFormat ??
-                                  NumFormat.standard_0;
-                              switch (value) {
-                                case null:
-                                  print('  empty cell');
-                                  print('  format: ${numFormat}');
-                                case TextCellValue():
-                                  print('  text: ${value.value}');
-                                case FormulaCellValue():
-                                  print('  formula: ${value.formula}');
-                                  print('  format: ${numFormat}');
-                                case IntCellValue():
-                                  print('  int: ${value.value}');
-                                  print('  format: ${numFormat}');
-                                case BoolCellValue():
-                                  print(
-                                      '  bool: ${value.value ? 'YES!!' : 'NO..'}');
-                                  print('  format: ${numFormat}');
-                                case DoubleCellValue():
-                                  print('  double: ${value.value}');
-                                  print('  format: ${numFormat}');
-                                case DateCellValue():
-                                  print(
-                                      '  date: ${value.year} ${value.month} ${value.day} (${value.asDateTimeLocal()})');
-                                case TimeCellValue():
-                                  print(
-                                      '  time: ${value.hour} ${value.minute} ... (${value.asDuration()})');
-                                case DateTimeCellValue():
-                                  print(
-                                      '  date with time: ${value.year} ${value.month} ${value.day} ${value.hour} ... (${value.asDateTimeLocal()})');
-                              }
-                            }
-                          */
+                            excelList['${row[1]!.value}'] = '${row[0]!.value}';
                           }
-                          print(excelList);
                         }
                       }
                     });
+                    createFilelist();
                   },
                   child: const Icon(Icons.add),
                 ),
@@ -172,21 +138,80 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
           ),
-          Flexible(
-            child: files.isEmpty
-                ? const Text('')
-                : ListView.builder(
-                    itemCount: files.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Text(files[index].path.split(separator).last),
-                      );
-                    },
-                  ),
-          ),
+          dataTable(),
         ],
       ),
+    );
+  }
+
+  Widget dataTable() {
+    return DataTable(
+      columns: const <DataColumn>[
+        DataColumn(
+          label: Text(
+            'Régi név',
+            style: TextStyle(fontStyle: FontStyle.italic),
+          ),
+        ),
+        DataColumn(
+          label: Text(
+            'Új név',
+            style: TextStyle(fontStyle: FontStyle.italic),
+          ),
+        ),
+      ],
+      rows: fileList.entries
+          .map(
+            (entry) => DataRow(
+              cells: [
+                DataCell(Text(entry.key)),
+                DataCell(Text(entry.value)),
+              ],
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  void createFilelist() {
+    if (excelList.isNotEmpty && files.isNotEmpty) {
+      for (var file in files) {
+        String oldName = p.basename(file.path);
+        String path = p.dirname(file.path);
+        String addString = excelList[oldName.split('_')[0]] ??
+            excelList[oldName.split(' ')[0]] ??
+            '';
+        if (addString != '') {
+          String newName = '${addString}_$oldName';
+          fileList[oldName] = newName;
+        }
+      }
+    }
+    print(fileList);
+  }
+
+  Future<void> _dialogBuilder(BuildContext context) {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Kész'),
+          content: const Text(
+            'Az átnevezés sikeresen befejeződött.',
+          ),
+          actions: <Widget>[
+            TextButton(
+              style: TextButton.styleFrom(
+                textStyle: Theme.of(context).textTheme.labelLarge,
+              ),
+              child: const Text('Ok'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
