@@ -56,7 +56,7 @@ class _HomePageState extends State<HomePage> {
                         excelList[oldName.split(' ')[0]] ??
                         '';
                     if (addString != '') {
-                      String newName = '${addString}_$oldName';
+                      String newName = '${addString.replaceAll('/', '_')}_$oldName';
                       file.rename('$path/$newName');
                     }
                   }
@@ -177,12 +177,14 @@ class _HomePageState extends State<HomePage> {
     if (excelList.isNotEmpty && files.isNotEmpty) {
       for (var file in files) {
         String oldName = p.basename(file.path);
+        print('Oldnme $oldName');  
         String path = p.dirname(file.path);
         String addString = excelList[oldName.split('_')[0]] ??
             excelList[oldName.split(' ')[0]] ??
             '';
+            print('addString $addString');
         if (addString != '') {
-          String newName = '${addString}_$oldName';
+          String newName = '${addString.replaceAll('/', '_')}_$oldName';
           fileList[oldName] = newName;
         }
       }
