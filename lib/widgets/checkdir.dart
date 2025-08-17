@@ -155,15 +155,8 @@ class _CheckDirState extends State<CheckDir> {
             });
 
             _seriesSelected = highest;
-          } else {
-            checkedDirName = null;
-            alertDialog(
-                context, 'Hibás mappa', 'A mappa üres vagy nem megfelelő!');
-          }
-        },
-      );
 
-      if (_seriesSelected != null) {
+                  if (_seriesSelected != null) {
         checkedFileNames.where((filename) {
           String machinatorNumber = filename.substring(0, 12);
 
@@ -176,14 +169,17 @@ class _CheckDirState extends State<CheckDir> {
         }).toList();
         machinatorList.sort();
         machinatorList.toSet().toList();
-      }
-      fullList = List.generate(int.parse(machinatorList.last.substring(6, 11)),
+
+           fullList = List.generate(int.parse(machinatorList.last.substring(6, 11)),
           (int index) {
         String numpart = '${index + 1}'.padLeft(5, '0');
         return ('$_seriesSelected$numpart');
       });
 
-      otherFiles = List<String>.of(checkedFileNames);
+
+      }
+
+       otherFiles = List<String>.of(checkedFileNames);
       otherFiles.retainWhere((e) {
         return !e.startsWith(_seriesSelected!) ||
             (!e.substring(11, 12).endsWith('_') &&
@@ -192,7 +188,18 @@ class _CheckDirState extends State<CheckDir> {
       otherFiles.sort();
       missingInvoices =
           fullList.toSet().difference(machinatorList.toSet()).toList();
-      print(missingInvoices);
+          } else {
+            checkedDirName = null;
+            alertDialog(
+                context, 'Hibás mappa', 'A mappa üres vagy nem megfelelő!');
+          }
+        },
+      );
+
+
+   
+
+     
     }
   }
 
