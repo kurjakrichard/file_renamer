@@ -156,38 +156,36 @@ class _CheckDirState extends State<CheckDir> {
 
             _seriesSelected = highest;
 
-                  if (_seriesSelected != null) {
-        checkedFileNames.where((filename) {
-          String machinatorNumber = filename.substring(0, 12);
+            if (_seriesSelected != null) {
+              checkedFileNames.where((filename) {
+                String machinatorNumber = filename.substring(0, 12);
 
-          if (machinatorNumber.startsWith(_seriesSelected!) &&
-              (machinatorNumber.substring(11, 12) == '_' ||
-                  machinatorNumber.substring(11, 12) == '-')) {
-            machinatorList.add(machinatorNumber.substring(0, 11));
-          }
-          return machinatorNumber.startsWith(_seriesSelected!);
-        }).toList();
-        machinatorList.sort();
-        machinatorList.toSet().toList();
+                if (machinatorNumber.startsWith(_seriesSelected!) &&
+                    (machinatorNumber.substring(11, 12) == '_' ||
+                        machinatorNumber.substring(11, 12) == '-')) {
+                  machinatorList.add(machinatorNumber.substring(0, 11));
+                }
+                return machinatorNumber.startsWith(_seriesSelected!);
+              }).toList();
+              machinatorList.sort();
+              machinatorList.toSet().toList();
 
-           fullList = List.generate(int.parse(machinatorList.last.substring(6, 11)),
-          (int index) {
-        String numpart = '${index + 1}'.padLeft(5, '0');
-        return ('$_seriesSelected$numpart');
-      });
+              fullList = List.generate(
+                  int.parse(machinatorList.last.substring(6, 11)), (int index) {
+                String numpart = '${index + 1}'.padLeft(5, '0');
+                return ('$_seriesSelected$numpart');
+              });
+            }
 
-
-      }
-
-       otherFiles = List<String>.of(checkedFileNames);
-      otherFiles.retainWhere((e) {
-        return !e.startsWith(_seriesSelected!) ||
-            (!e.substring(11, 12).endsWith('_') &&
-                !e.substring(11, 12).endsWith('-'));
-      });
-      otherFiles.sort();
-      missingInvoices =
-          fullList.toSet().difference(machinatorList.toSet()).toList();
+            otherFiles = List<String>.of(checkedFileNames);
+            otherFiles.retainWhere((e) {
+              return !e.startsWith(_seriesSelected!) ||
+                  (!e.substring(11, 12).endsWith('_') &&
+                      !e.substring(11, 12).endsWith('-'));
+            });
+            otherFiles.sort();
+            missingInvoices =
+                fullList.toSet().difference(machinatorList.toSet()).toList();
           } else {
             checkedDirName = null;
             alertDialog(
@@ -195,17 +193,13 @@ class _CheckDirState extends State<CheckDir> {
           }
         },
       );
-
-
-   
-
-     
     }
   }
 
   Widget dataTable(List<String> datas) {
     return SingleChildScrollView(
       child: DataTable(
+        headingRowHeight: 0,
         columns: <DataColumn>[
           DataColumn(
             label: Container(),
