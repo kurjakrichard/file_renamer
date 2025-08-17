@@ -158,7 +158,13 @@ class _CheckDirState extends State<CheckDir> {
 
             if (_seriesSelected != null) {
               checkedFileNames.where((filename) {
-                String machinatorNumber = filename.substring(0, 12);
+                 String machinatorNumber;
+
+                 if(filename.length < 12){
+                  machinatorNumber = filename;} else {
+                  machinatorNumber = filename.substring(0, 12);
+                  }
+                       
 
                 if (machinatorNumber.startsWith(_seriesSelected!) &&
                     (machinatorNumber.substring(11, 12) == '_' ||
