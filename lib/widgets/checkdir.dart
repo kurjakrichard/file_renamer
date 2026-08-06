@@ -132,7 +132,7 @@ class _CheckDirState extends State<CheckDir> {
             checkedFileNames.add(p.basename(file.path));
           }
 
-          checkedFileNames.forEach((element) {
+          for (var element in checkedFileNames) {
             String elementseries = element.substring(0, 6);
             if ((elementseries[2] == '-' || elementseries[2] == '_') &&
                 (elementseries[5] == '-' || elementseries[5] == '_')) {
@@ -142,7 +142,7 @@ class _CheckDirState extends State<CheckDir> {
                 seriesMap[elementseries] += 1;
               }
             }
-          });
+          }
 
           if (seriesMap.isNotEmpty) {
             String highest = seriesMap.keys.first;
@@ -226,6 +226,6 @@ class _CheckDirState extends State<CheckDir> {
 
   Widget text(String text) {
     return Text(text,
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold));
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold));
   }
 }
