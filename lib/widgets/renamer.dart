@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
-import 'package:excel/excel.dart';
+import 'package:excel_plus/excel_plus.dart';
 import 'package:path/path.dart' as p;
 import 'package:file_picker/file_picker.dart';
 import '../widgets/alertdialog.dart';
+import 'package:remove_diacritic/remove_diacritic.dart'; 
 
 enum Companies {Spirax, EuroPuppy }
 class Renamer extends StatefulWidget {
@@ -14,7 +15,7 @@ class Renamer extends StatefulWidget {
 }
 
 class _RenamerState extends State<Renamer> {
-  Companies _currencySelected = Companies.Spirax;
+  Companies _companySelected = Companies.Spirax;
 
    //file renamer part
   String separator = Platform.isWindows ? '\\' : '/';
@@ -29,33 +30,128 @@ class _RenamerState extends State<Renamer> {
   @override
   Widget build(BuildContext context) {
     return  Scaffold(
-      body: fileRenamer(),
-      
       floatingActionButton: floatingActionButton(),
+      body: ListView(
+      children: [      
+        companyChoser(),
+        directoryChoser(),
+        fileChoser(), 
+        dataTable(),
+      ],
+    ),   
     );
   }
-
-
-  void createFilelist() {
-    if (excelList.isNotEmpty && renameFiles.isNotEmpty) {
-      for (var file in renameFiles) {
-        String oldName = p.basename(file.path);
-        // print('Oldname $oldName');
-        // String path = p.dirname(file.path);
-        String addString = excelList[oldName.split('_')[0]] ??
-            excelList[oldName.split(' ')[0]] ??
-            '';
-        //  print('addString $addString');
-        if (addString != '') {
-          String newName = '${addString.replaceAll('/', '_')}_$oldName';
-          renameFileList[oldName] = newName;
-        }
-      }
-    }
-    print('RenameFileList: $renameFileList');
+  
+  Widget companyChoser() {
+    return Padding(
+          padding: const EdgeInsets. symmetric( horizontal: 16),  
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              const Text('Válaszd ki a céget:   ',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+             DropdownButton<Companies>(
+        underline: Container(
+          height: 1,
+          color: Colors.white,
+        ),
+        value: _companySelected,
+        items: Companies.values.map((Companies value) {
+          return DropdownMenuItem(value: value, child: Text(value.name));
+        }).toList(),
+        onChanged: (newValueSelected) {
+          setState(() {
+            _companySelected = newValueSelected!;
+          });
+        }),
+            ],
+          ),
+        ); 
   }
-  
-  
+
+  Widget directoryChoser() {
+  return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              const Text('Add meg a átnevezedő fájlok mappáját:   ',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ElevatedButton(
+                onPressed: () async {
+                  String? selectedDirectory =
+                      await FilePicker.platform.getDirectoryPath();
+                  if (selectedDirectory != null) {
+                    setState(() {
+                      selectedDir = Directory(selectedDirectory);
+                      selectedDirName = selectedDirectory;
+                      List<FileSystemEntity> entities = selectedDir!.listSync();
+                      renameFiles = entities.whereType<File>().toList();                    });
+                  }
+                },
+                child: const Icon(Icons.add),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 16.0),
+                child: Text(selectedDirName ?? ''),
+              )
+            ],
+          ),
+        );
+}
+
+Widget fileChoser() {
+  return     Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              const Text('Válaszd ki az excel fájl:   ',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ElevatedButton(
+                onPressed: () async {
+                  FilePickerResult? pickedFile =
+                      await FilePicker.platform.pickFiles(
+                    type: FileType.custom,
+                    allowedExtensions: ['xlsx'],
+                    allowMultiple: false,
+                  );
+
+                  /// file might be picked
+                  setState(() {
+                    if (pickedFile != null) {
+                      selectedFileName = pickedFile.files.single.name;
+                      var bytes =
+                          File(pickedFile.files.first.path!).readAsBytesSync();
+                      var excel = Excel.decodeBytes(bytes);
+                      for (var table in excel.tables.keys) {
+                        for (var row in excel.tables[table]!.rows) {
+                          //print('${row[9]!.value}');
+                          //print('${row[1]!.value}'.substring(3));
+                        if(_companySelected == Companies.Spirax){
+                          excelList['${row[9]!.value}'] =
+                              '${row[1]!.value}'.substring(3);  
+                        } else {excelList['${row[9]!.value}'] =
+                              '${'${row[1]!.value}'.substring(3)} ${row[4]!.value.toString().replaceAll(':', '').replaceAll('(', '')..replaceAll(')', '')}';}
+
+                          
+                        }
+                      }
+                     print(excelList);
+                    }
+                  });
+                  createFilelist();
+                },
+                child: const Icon(Icons.add),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 16.0),
+                child: Text(selectedFileName ?? ''),
+              )
+            ],
+          ),
+        );
+}
   Widget dataTable() {
     return DataTable(
       columns: const <DataColumn>[
@@ -83,116 +179,6 @@ class _RenamerState extends State<Renamer> {
           )
           .toList(),
     );
-  }
-
-    Widget fileRenamer() {
-    return ListView(
-      children: [      
-         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16),  
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              const Text('Válaszd ki a céget:   ',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          dropDownButton()
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              const Text('Add meg a átnevezedő fájlok mappáját:   ',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              ElevatedButton(
-                onPressed: () async {
-                  String? selectedDirectory =
-                      await FilePicker.platform.getDirectoryPath();
-                  if (selectedDirectory != null) {
-                    setState(() {
-                      selectedDir = Directory(selectedDirectory);
-                      selectedDirName = selectedDirectory;
-                      List<FileSystemEntity> entities = selectedDir!.listSync();
-                      renameFiles = entities.whereType<File>().toList();
-                      createFilelist();
-                    });
-                  }
-                },
-                child: const Icon(Icons.add),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 16.0),
-                child: Text(selectedDirName ?? ''),
-              )
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              const Text('Válaszd ki az excel fájl:   ',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              ElevatedButton(
-                onPressed: () async {
-                  FilePickerResult? pickedFile =
-                      await FilePicker.platform.pickFiles(
-                    type: FileType.custom,
-                    allowedExtensions: ['xlsx'],
-                    allowMultiple: false,
-                  );
-
-                  /// file might be picked
-                  setState(() {
-                    if (pickedFile != null) {
-                      selectedFileName = pickedFile.files.single.name;
-                      var bytes =
-                          File(pickedFile.files.first.path!).readAsBytesSync();
-                      var excel = Excel.decodeBytes(bytes);
-                      for (var table in excel.tables.keys) {
-                        for (var row in excel.tables[table]!.rows) {
-                          //print('${row[9]!.value}');
-                          //print('${row[1]!.value}'.substring(3));
-                          excelList['${row[9]!.value}'] =
-                              '${row[1]!.value}'.substring(3);
-                        }
-                      }
-                      print(excelList);
-                    }
-                  });
-                  createFilelist();
-                },
-                child: const Icon(Icons.add),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 16.0),
-                child: Text(selectedFileName ?? ''),
-              )
-            ],
-          ),
-        ),
-        dataTable(),
-      ],
-    );
-  }
-  Widget dropDownButton() {
-    return DropdownButton<Companies>(
-        underline: Container(
-          height: 1,
-          color: Colors.white,
-        ),
-        value: _currencySelected,
-        items: Companies.values.map((Companies value) {
-          return DropdownMenuItem(value: value, child: Text(value.name));
-        }).toList(),
-        onChanged: (newValueSelected) {
-          setState(() {
-            _currencySelected = newValueSelected!;
-          });
-        });
   }
 
     FloatingActionButton floatingActionButton() {
@@ -236,4 +222,33 @@ class _RenamerState extends State<Renamer> {
             },
           );
   }
+  
+    void createFilelist() {
+    if (excelList.isNotEmpty && renameFiles.isNotEmpty) {
+      for (var file in renameFiles) {
+        String oldName = p.basename(file.path);
+        print('Oldname: $oldName');
+        // String path = p.dirname(file.path);
+        String addString = excelList[oldName.split('_')[0]] ??
+            excelList[oldName.split(' ')[0]] ??
+            '';
+        print('addString: $addString');
+        if (addString != '') {
+          if(_companySelected == Companies.Spirax){
+          String newName = '${addString.replaceAll('/', '_')}_$oldName';
+          renameFileList[oldName] = newName;  
+          } else {
+            String addStringInvoiceNumber = addString.split(' ')[0];
+            String addStringCompanyName = addString.substring(12);
+            String newName = '${addStringInvoiceNumber.replaceAll('/', '_')}_${oldName.split('.')[0].replaceAll('_12958900', '')} $addStringCompanyName.${oldName.split('.')[1]}';
+            renameFileList[oldName] = newName;  
+          }
+          
+        }
+      }
+    }
+    print('RenameFileList: $renameFileList');
+  }
 }
+
+
