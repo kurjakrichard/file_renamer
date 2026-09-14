@@ -26,6 +26,7 @@ class _RenamerState extends State<Renamer> {
   List<File> renameFiles = [];
   Map<String, String> excelList = {};
   Map renameFileList = {};
+ 
 
   @override
   Widget build(BuildContext context) {
@@ -206,9 +207,10 @@ Widget fileChoser() {
                       excelList[oldName.split(' ')[0]] ??
                       '';
                   if (addString != '') {
-                    String newName =
-                        '${addString.replaceAll('/', '_')}_$oldName';
+                    String newName = 
+                        '${addString.replaceAll('/', '_')}_$oldName.'.replaceAll('_12958900', '');
                     file.rename('$path/$newName');
+                    print('newName: $newName');
                   }
                 }
                 setState(() {
@@ -240,7 +242,7 @@ Widget fileChoser() {
           } else {
             String addStringInvoiceNumber = addString.split(' ')[0];
             String addStringCompanyName = addString.substring(12);
-            String newName = '${addStringInvoiceNumber.replaceAll('/', '_')}_${oldName.split('.')[0].replaceAll('_12958900', '')} $addStringCompanyName.${oldName.split('.')[1]}';
+             String newName = '${addStringInvoiceNumber.replaceAll('/', '_')}_$addStringCompanyName ${oldName.split('.')[0].replaceAll('_12958900', '')}.${oldName.split('.')[1]} ';
             renameFileList[oldName] = newName;  
           }
           
