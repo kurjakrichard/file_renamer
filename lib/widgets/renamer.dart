@@ -4,9 +4,18 @@ import 'package:excel_plus/excel_plus.dart';
 import 'package:path/path.dart' as p;
 import 'package:file_picker/file_picker.dart';
 import '../widgets/alertdialog.dart';
-import 'package:remove_diacritic/remove_diacritic.dart'; 
 
-enum Companies {Spirax, EuroPuppy }
+enum Companies {spirax(name: 'Spirax'), europuppy(name: 'Europuppy');
+const Companies({
+    required this.name,
+  });
+
+  final String name;
+}
+ 
+
+
+
 class Renamer extends StatefulWidget {
   const Renamer({super.key});
 
@@ -15,7 +24,7 @@ class Renamer extends StatefulWidget {
 }
 
 class _RenamerState extends State<Renamer> {
-  Companies _companySelected = Companies.Spirax;
+  Companies _companySelected = Companies.spirax;
 
    //file renamer part
   String separator = Platform.isWindows ? '\\' : '/';
@@ -129,7 +138,7 @@ Widget fileChoser() {
                         for (var row in excel.tables[table]!.rows) {
                           //print('${row[9]!.value}');
                           //print('${row[1]!.value}'.substring(3));
-                        if(_companySelected == Companies.Spirax){
+                        if(_companySelected == Companies.spirax){
                           excelList['${row[9]!.value}'] =
                               '${row[1]!.value}'.substring(3);  
                         } else {excelList['${row[9]!.value}'] =
@@ -236,7 +245,7 @@ Widget fileChoser() {
             '';
         print('addString: $addString');
         if (addString != '') {
-          if(_companySelected == Companies.Spirax){
+          if(_companySelected == Companies.spirax){
           String newName = '${addString.replaceAll('/', '_')}_$oldName';
           renameFileList[oldName] = newName;  
           } else {

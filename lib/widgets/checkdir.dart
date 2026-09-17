@@ -131,11 +131,11 @@ class _CheckDirState extends State<CheckDir> {
           for (File file in checkedFiles) {
             checkedFileNames.add(p.basename(file.path));
           }
-
+          
           for (var element in checkedFileNames) {
-            String elementseries = element.substring(0, 6);
-            if ((elementseries[2] == '-' || elementseries[2] == '_') &&
-                (elementseries[5] == '-' || elementseries[5] == '_')) {
+            String elementseries = element.substring(0, 12);
+              if (['-', '_'].contains(elementseries[2]) &&
+                ['-', '_'].contains(elementseries[5]) && int.tryParse(element.substring(6, 12)) != null) {
               if (!seriesMap.containsKey(elementseries)) {
                 seriesMap[elementseries] = 1;
               } else {
