@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:path/path.dart' as p;
-import 'package:file_picker/file_picker.dart' show FilePickerResult, FilePicker;
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'alertdialog.dart';
 
@@ -13,17 +13,12 @@ class CheckDir extends StatefulWidget {
 
 class _CheckDirState extends State<CheckDir> {
   //check dir part
-  Directory? checkedDir;
-  FilePickerResult? checkPickedFile;
   String? checkedDirName;
-  List<File> checkedFiles = [];
-  List<String> checkedFileNames = [];
-  String? _seriesSelected;
+  String? seriesSelected;
   Map<String, dynamic> seriesMap = {};
-  List<String> otherFiles = [];
-  List<String> machinatorList = [];
-  List<String> fullList = [];
   List<String> missingInvoices = [];
+  List<String> otherFiles = [];
+ 
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +55,7 @@ class _CheckDirState extends State<CheckDir> {
                       'Vizsgált sorozat:   ',
                     ),
                     Text(
-                      _seriesSelected!,
+                      seriesSelected!,
                       style: const TextStyle(fontSize: 16),
                     ),
                     const SizedBox(
@@ -108,34 +103,33 @@ class _CheckDirState extends State<CheckDir> {
   }
 
   void checkDirectory() async {
-    checkPickedFile = null;
-    checkedDirName = null;
-    checkedFiles = [];
-    checkedFileNames = [];
-    _seriesSelected = null;
-    seriesMap = {};
-    checkedDir = null;
+   
+    List<File> checkedFiles = [];
+    List<String> checkedFileNames = [];
+    List<String> machinatorList = [];
+    List<String> fullList = [];
+    seriesSelected = null;
+    seriesMap = {};  
     otherFiles = [];
-    machinatorList = [];
-    fullList = [];
     missingInvoices = [];
 
     checkedDirName = await FilePicker.platform.getDirectoryPath();
-
     if (checkedDirName != null) {
       setState(
         () {
-          checkedDir = Directory(checkedDirName!);
-          List<FileSystemEntity> entities = checkedDir!.listSync();
+          Directory checkedDir = Directory(checkedDirName!);
+          List<FileSystemEntity> entities = checkedDir.listSync();
           checkedFiles = entities.whereType<File>().toList();
           for (File file in checkedFiles) {
             checkedFileNames.add(p.basename(file.path));
-          }
-          
-          for (var element in checkedFileNames) {
-            String elementseries = element.substring(0, 12);
-              if (['-', '_'].contains(elementseries[2]) &&
-                ['-', '_'].contains(elementseries[5]) && int.tryParse(element.substring(6, 12)) != null) {
+          }     
+          for (var element in checkedFileNames) {   
+               if (['-', '_'].contains(element[2]) &&
+                ['-', '_'].contains(element[5]) && 
+                int.tryParse(element.substring(6, 10)) != null &&
+                ['-', '_', ' '].contains(element[11])
+                ) {
+            String elementseries = element.substring(0, 6);
               if (!seriesMap.containsKey(elementseries)) {
                 seriesMap[elementseries] = 1;
               } else {
@@ -154,9 +148,9 @@ class _CheckDirState extends State<CheckDir> {
               }
             });
 
-            _seriesSelected = highest;
+            seriesSelected = highest;
 
-            if (_seriesSelected != null) {
+            if (seriesSelected != null) {
               checkedFileNames.where((filename) {
                  String machinatorNumber;
 
@@ -166,12 +160,12 @@ class _CheckDirState extends State<CheckDir> {
                   }
                        
 
-                if (machinatorNumber.startsWith(_seriesSelected!) &&
+                if (machinatorNumber.startsWith(seriesSelected!) &&
                     (machinatorNumber.substring(11, 12) == '_' ||
                         machinatorNumber.substring(11, 12) == '-')) {
                   machinatorList.add(machinatorNumber.substring(0, 11));
                 }
-                return machinatorNumber.startsWith(_seriesSelected!);
+                return machinatorNumber.startsWith(seriesSelected!);
               }).toList();
               machinatorList.sort();
               machinatorList.toSet().toList();
@@ -179,13 +173,13 @@ class _CheckDirState extends State<CheckDir> {
               fullList = List.generate(
                   int.parse(machinatorList.last.substring(6, 11)), (int index) {
                 String numpart = '${index + 1}'.padLeft(5, '0');
-                return ('$_seriesSelected$numpart');
+                return ('$seriesSelected$numpart');
               });
             }
 
             otherFiles = List<String>.of(checkedFileNames);
             otherFiles.retainWhere((e) {
-              return !e.startsWith(_seriesSelected!) ||
+              return !e.startsWith(seriesSelected!) ||
                   (!e.substring(11, 12).endsWith('_') &&
                       !e.substring(11, 12).endsWith('-'));
             });
